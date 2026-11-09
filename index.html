@@ -1351,6 +1351,11 @@ const PLACES = [
 {id:'p186',name:'Rooftop Studio stay (Nov 17–21)',category:'key',neighborhood:'11th arr.',lat:48.8701129,lng:2.372988,address:'171 Rue Saint-Maur, appartement 96, 75011 Paris',trust:'key',confirmed:true,notes:['Second stay — the Rooftop Studio, booked after the Oasis fell through over a host cat. Nov 17–21.']},
 {id:'p187',name:"Elizabeth's Apartment",category:'key',neighborhood:'20th arr.',lat:48.873818,lng:2.3918317,address:'14 bis Rue Frédérick Lemaître, 75020 Paris',trust:'key',confirmed:true,notes:["Elizabeth's apartment."]},
 {id:'p188',name:'123 mon école (Montessori, Paris XV)',category:'key',neighborhood:'15th arr.',lat:48.84747,lng:2.2993,address:'28 Rue Frémicourt, 75015 Paris',trust:'key',confirmed:true,notes:['Bilingual international Montessori school — visiting for work. Phone (+33) 1 71 37 32 46 · paris15@123monecole.com · www.123monecole.com. (Two Google listings exist for this school a few blocks apart; this address matches the school\'s own official directory listing for the Paris XV site.)']},
+
+// ---------- MORE MONTMARTRE: Dalí, Halle Saint-Pierre, Le Nazir ----------
+{id:'p189',name:'Espace Dalí (the Dalí museum)',category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8865119,lng:2.3398718,address:'11 Rue Poulbot, 75018 Paris',trust:'trusted',confirmed:true,notes:["Private Dalí museum/gallery in Montmartre — sculptures, drawings, and paintings, small but dense, 4.5★ (3,316). Not on the Paris Museum Pass. Been here before."]},
+{id:'p190',name:"Halle Saint-Pierre (Musée d'Art Naïf)",category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8847467,lng:2.3445132,address:'2 Rue Ronsard, 75018 Paris',trust:'trusted',confirmed:true,notes:["Cultural center at the base of the Sacré-Cœur steps — outsider/naïve art exhibits, a bookstore, and a café, 4.5★ (2,360). Bookstore and café are free to enter; the exhibits need a ticket. Been here before."]},
+{id:'p191',name:'Café Le Nazir',category:'restaurant',neighborhood:'18th arr., Montmartre',lat:48.8858481,lng:2.3351855,address:'56 Rue des Abbesses, 75018 Paris',trust:'trusted',confirmed:true,notes:['Bistro on Rue des Abbesses, open late (until 2am) — good for breakfast or dinner, mixed cheese/meat boards, onion soup, duck confit, 4.3★ (1,627). Been here before.']},
 ];
 
 // Neighborhood-level / general tips that don't map to one address.
@@ -1444,15 +1449,26 @@ let searchQuery = '';
 let currentView = 'map';
 
 // ---------- Map setup ----------
-const map = L.map('map', { zoomControl: true }).setView([48.8608, 2.3522], 13);
+// Two tile sources, split by zoom: the light/minimal Esri canvas for the
+// normal browsing range (its tiles genuinely stop at 16 — anything past
+// that was being upscaled/blurred, which is why street-level zoom looked
+// pixelated), then real OpenStreetMap street tiles take over from 17-19
+// so zooming in to street level actually stays crisp.
+const map = L.map('map', { zoomControl: true, maxZoom: 19 }).setView([48.8608, 2.3522], 13);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-  maxZoom: 19,
-  maxNativeZoom: 16,
+  minZoom: 0,
+  maxZoom: 16,
   attribution: 'Esri, HERE, Garmin &copy; OpenStreetMap contributors'
 }).addTo(map);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+  minZoom: 0,
+  maxZoom: 16,
+}).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  minZoom: 17,
   maxZoom: 19,
-  maxNativeZoom: 16,
+  maxNativeZoom: 19,
+  attribution: '&copy; OpenStreetMap contributors',
 }).addTo(map);
 
 const clusterGroup = L.markerClusterGroup({
