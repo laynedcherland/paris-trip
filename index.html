@@ -759,6 +759,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     --trust-pin-deep:#5a97a3;
     --key-pin:#AD4D8C;
     --key-pin-deep:#7a3661;
+    --landmark-pin:#808000;
+    --landmark-pin-deep:#5c5c00;
     --danger:#b5462f;
     --shadow:0 2px 10px rgba(31,36,48,0.08);
   }
@@ -858,6 +860,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .dot.base{background:var(--base-pin);}
   .dot.trust{background:var(--trust-pin);}
   .dot.key{background:var(--key-pin);}
+  .dot.landmark{background:var(--landmark-pin);}
+
+  .filter-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 18px;background:var(--card);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);}
+  .filter-status-row #clearFiltersBtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .filter-status-row #clearFiltersBtn:hover{background:var(--paper);}
 
   main{flex:1;position:relative;overflow:hidden;}
   #map{position:absolute;inset:0;}
@@ -982,6 +989,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .field textarea{min-height:70px;resize:vertical;}
   .field .hint{font-size:11px;color:var(--muted);margin-top:4px;}
   .checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px;}
+  .use-location-btn{width:100%;padding:9px;border-radius:8px;border:1px solid var(--gold);background:#fff;color:var(--gold-deep);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;}
+  .use-location-btn:hover{background:var(--paper);}
+  .use-location-btn:disabled{opacity:0.6;cursor:default;}
+  #locationStatus{font-size:11px;color:var(--muted);margin:-4px 0 10px;}
+  #locationStatus.error{color:var(--danger);}
+  #locationStatus.success{color:var(--trust-pin-deep);}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
   .coords-row{display:flex;gap:8px;}
   .coords-row .field{flex:1;}
@@ -1022,13 +1035,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <div class="chip-row" id="listChips" style="padding:0 18px 10px;background:var(--card);border-bottom:1px solid var(--line);">
     <button class="chip" data-list="all">All</button>
     <button class="chip" data-list="want">Want to try</button>
-    <button class="chip" data-list="approved">Approved</button>
+    <button class="chip" data-list="approved">Today's itinerary</button>
     <button class="chip" data-list="visited">Visited</button>
+  </div>
+  <div class="filter-status-row" id="filterStatusRow" style="display:none;">
+    <span id="filterStatusText"></span>
+    <button id="clearFiltersBtn" type="button">Clear filters</button>
   </div>
   <div class="legend">
     <span><span class="dot base"></span>General recs</span>
     <span><span class="dot trust"></span>Trusted</span>
     <span><span class="dot key"></span>Stays & key addresses</span>
+    <span><span class="dot landmark"></span>Classics</span>
   </div>
 
   <main>
@@ -1080,6 +1098,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
           <label>Address (used for the Google Maps link)</label>
           <input type="text" id="f_address" placeholder="Street, postal code, Paris">
         </div>
+        <button type="button" id="useMyLocationBtn" class="use-location-btn">📍 Use my current location</button>
+        <div class="hint" id="locationStatus" style="display:none;"></div>
         <div class="coords-row">
           <div class="field">
             <label>Latitude</label>
@@ -1122,7 +1142,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </script>
 <script>
 // Paris trip planner — seed data
-// trust: 'trusted' (Mollie + the first trusted Google list) / 'base' (everyone else) / 'key' (our own stays & key addresses — not a recommendation, just somewhere we need to find)
+// trust: 'trusted' (Mollie + the first trusted Google list) / 'base' (everyone else) / 'key' (our own stays & key addresses — not a recommendation, just somewhere we need to find) / 'landmark' (the famous Paris classics — olive pins)
 // confirmed: false means no reliable lat/lng — shown in panel only, never on the map
 
 function gmaps(name, address) {
@@ -1227,12 +1247,12 @@ const PLACES = [
 
 // ---------- MUSEUMS & LANDMARKS ----------
 {id:'p76',name:"Musée d'Orsay",category:'museum',neighborhood:'7th arr.',lat:48.860100,lng:2.326600,address:"1 Rue de la Légion d'Honneur, 75007 Paris",trust:'base',confirmed:true,notes:['"Blew the Louvre out of the water" for one commenter.','A repeated favorite museum.']},
-{id:'p77',name:'Sainte-Chapelle',category:'museum',neighborhood:'1st arr.',lat:48.855400,lng:2.345000,address:'8 Boulevard du Palais, 75001 Paris',trust:'base',confirmed:true,notes:['Repeatedly called a favorite — book ahead, arrive early to beat the line.','Incredible stained glass.']},
+{id:'p77',name:'Sainte-Chapelle',category:'museum',neighborhood:'1st arr.',lat:48.855400,lng:2.345000,address:'8 Boulevard du Palais, 75001 Paris',trust:'landmark',confirmed:true,notes:['Repeatedly called a favorite — book ahead, arrive early to beat the line.','Incredible stained glass.']},
 {id:'p78',name:"Musée de l'Orangerie",category:'museum',neighborhood:'1st arr.',lat:48.863800,lng:2.322700,address:'Jardin des Tuileries, 75001 Paris',trust:'base',confirmed:true,notes:["Monet's Water Lilies — someone's stated favorite museum."]},
 {id:'p79',name:'Musée Picasso',category:'museum',neighborhood:'4th arr.',lat:48.859900,lng:2.362500,address:'5 Rue de Thorigny, 75003 Paris',trust:'base',confirmed:true,notes:['Praised as manageable and not overwhelming — a short, worthwhile visit.']},
-{id:'p80',name:'Les Invalides',category:'museum',neighborhood:'7th arr.',lat:48.856600,lng:2.312500,address:'129 Rue de Grenelle, 75007 Paris',trust:'base',confirmed:true,notes:["Napoleon's history and tomb, under the golden dome."]},
+{id:'p80',name:'Les Invalides',category:'museum',neighborhood:'7th arr.',lat:48.856600,lng:2.312500,address:'129 Rue de Grenelle, 75007 Paris',trust:'landmark',confirmed:true,notes:["Napoleon's history and tomb, under the golden dome."]},
 {id:'p81',name:'Atelier des Lumières',category:'museum',neighborhood:'11th arr.',lat:48.864600,lng:2.376700,address:'38 Rue Saint-Maur, 75011 Paris',trust:'base',confirmed:true,notes:['Immersive digital art projections — double check the address, there\'s a similarly-named lamp store across town.']},
-{id:'p82',name:'The Louvre',category:'museum',neighborhood:'1st arr.',lat:48.860600,lng:2.337600,address:'Rue de Rivoli, 75001 Paris',trust:'base',confirmed:true,notes:["Napoleon III's apartments are a good tip — use the official app for a fast, ~45 min highlights route."]},
+{id:'p82',name:'The Louvre',category:'museum',neighborhood:'1st arr.',lat:48.860600,lng:2.337600,address:'Rue de Rivoli, 75001 Paris',trust:'landmark',confirmed:true,notes:["Napoleon III's apartments are a good tip — use the official app for a fast, ~45 min highlights route."]},
 {id:'p83',name:'Musée de la Vie Romantique',category:'museum',neighborhood:'9th arr.',lat:48.879700,lng:2.332700,address:'16 Rue Chaptal, 75009 Paris',trust:'base',confirmed:true,notes:['Smaller, local-flavor museum — cute building with a coffee shop.']},
 {id:'p84',name:'Musée de Montmartre',category:'museum',neighborhood:'18th arr.',lat:48.888600,lng:2.340600,address:'12 Rue Cortot, 75018 Paris',trust:'base',confirmed:true,notes:['Local history museum.']},
 {id:'p85',name:'Palais Garnier',category:'museum',neighborhood:'9th arr.',lat:48.871900,lng:2.331600,address:'Place de l\'Opéra, 75009 Paris',trust:'base',confirmed:true,notes:['Worth visiting even without a show — tours available.']},
@@ -1269,7 +1289,7 @@ const PLACES = [
 // ---------- FROM LAYNE'S GOOGLE MAPS LISTS (batch 1) ----------
 {id:'p111',name:"L'Avant Comptoir du Marché",category:'restaurant',neighborhood:'6th arr.',lat:48.8517684,lng:2.3354537,address:'14 Rue Lobineau, 75006 Paris',trust:'trusted',confirmed:true,notes:['Saved to a Google Maps list — bar/small plates, 4.4★ (1,234).']},
 {id:'p112',name:"L'Avant Comptoir de la Terre",category:'restaurant',neighborhood:'6th arr.',lat:48.8520234,lng:2.3387820,address:"3 Carr de l'Odéon, 75006 Paris",trust:'trusted',confirmed:true,notes:['Saved to a Google Maps list — tapas bar, 4.5★ (2,034).']},
-{id:'p113',name:'Shakespeare and Company',category:'shop',neighborhood:'5th arr.',lat:48.8525632,lng:2.3471303,address:'37 Rue de la Bûcherie, 75005 Paris',trust:'trusted',confirmed:true,notes:['Famous English-language bookstore, 4.6★ (25,721).']},
+{id:'p113',name:'Shakespeare and Company',category:'shop',neighborhood:'5th arr.',lat:48.8525632,lng:2.3471303,address:'37 Rue de la Bûcherie, 75005 Paris',trust:'landmark',confirmed:true,notes:['Famous English-language bookstore, 4.6★ (25,721).']},
 {id:'p114',name:'Les Caves Legrand',category:'shop',neighborhood:'2nd arr.',lat:48.8663131,lng:2.3398759,address:'1 Rue de la Banque, 75002 Paris',trust:'trusted',confirmed:true,notes:['Wine store, 4.6★ (578).']},
 {id:'p115',name:'Centre Pompidou',category:'museum',neighborhood:'4th arr.',lat:48.8608316,lng:2.3517012,address:'Place Georges Pompidou, 75004 Paris',trust:'trusted',confirmed:true,notes:['Modern art museum — currently mid-renovation with no confirmed reopening before 2030. Don\'t plan around it for this trip. 4.4★ (136).']},
 {id:'p116',name:'Boulangerie Eric Kayser (Louvre Rivoli)',category:'cafe',neighborhood:'1st arr.',lat:48.8635385,lng:2.3342724,address:"4 Rue de l'Échelle, 75001 Paris",trust:'trusted',confirmed:true,notes:['Bakery, 3.8★ (2,100).']},
@@ -1309,7 +1329,7 @@ const PLACES = [
 {id:'p148',name:'Massimo Dutti',category:'shop',neighborhood:'Paris',trust:'base',confirmed:false,notes:['Clothing store (chain, multiple Paris locations), 3.6★ (980). Couldn\'t pin an exact location with confidence.']},
 {id:'p149',name:'Le Village Royal - Cité Berryer',category:'shop',neighborhood:'8th arr.',lat:48.869371,lng:2.3223251,address:'25 Rue Royale, 75008 Paris',trust:'base',confirmed:true,notes:['Upscale shopping passage near Place de la Madeleine, 4.5★ (313).']},
 {id:'p150',name:'Café de la Mairie',category:'cafe',neighborhood:'6th arr.',lat:48.8515084,lng:2.3337044,address:'8 Pl. Saint-Sulpice, 75006 Paris',trust:'base',confirmed:true,notes:['Classic Left Bank café on Place Saint-Sulpice, 3.2★ (1,143).']},
-{id:'p151',name:'Eiffel Tower',category:'activity',neighborhood:'7th arr.',lat:48.8583701,lng:2.2944813,address:'Av. Gustave Eiffel, 75007 Paris',trust:'base',confirmed:true,notes:['4.7★ (494,757) — book tickets online in advance.']},
+{id:'p151',name:'Eiffel Tower',category:'activity',neighborhood:'7th arr.',lat:48.8583701,lng:2.2944813,address:'Av. Gustave Eiffel, 75007 Paris',trust:'landmark',confirmed:true,notes:['4.7★ (494,757) — book tickets online in advance.']},
 {id:'p152',name:'Le Petit Comte « Bouillon Boulogne »',category:'restaurant',neighborhood:'Boulogne-Billancourt',lat:48.844233,lng:2.2340771,address:'89 Av. Jean Baptiste Clement, 92100 Boulogne-Billancourt',trust:'base',confirmed:true,notes:['French restaurant, 4.2★ (476).']},
 {id:'p153',name:'Brasserie Bohème Boulogne',category:'restaurant',neighborhood:'Boulogne-Billancourt',lat:48.8444611,lng:2.2336084,address:'62 TER Av. Jean Baptiste Clement, 92100 Boulogne-Billancourt',trust:'base',confirmed:true,notes:['Brasserie, 4.4★ (629).']},
 {id:'p154',name:'Daddy bear',category:'restaurant',neighborhood:'8th arr.',lat:48.8678591,lng:2.3047155,address:'27 Rue François 1er, 75008 Paris',trust:'base',confirmed:true,notes:['Burger restaurant, 4.3★ (456).']},
@@ -1318,7 +1338,7 @@ const PLACES = [
 {id:'p157',name:'Bois de Boulogne',category:'park',neighborhood:'16th arr.',lat:48.8619839,lng:2.2523138,address:'75016 Paris',trust:'base',confirmed:true,notes:['Huge park on the western edge of the city, 4.3★ (29,043).']},
 {id:'p158',name:'Pont Neuf',category:'activity',neighborhood:'1st arr.',lat:48.8566969,lng:2.3408412,address:'75001 Paris',trust:'base',confirmed:true,notes:['Oldest bridge in Paris, 4.6★ (22,884).']},
 {id:'p159',name:'Palais de Chaillot',category:'activity',neighborhood:'16th arr.',lat:48.8623687,lng:2.2881512,address:'1 Pl. du Trocadéro et du 11 Novembre, 75016 Paris',trust:'base',confirmed:true,notes:['Best spot for the classic Eiffel Tower view, 4.6★ (6,474).']},
-{id:'p160',name:'Arc de Triomphe',category:'activity',neighborhood:'8th arr.',lat:48.8737917,lng:2.2950275,address:'Pl. Charles de Gaulle, 75008 Paris',trust:'base',confirmed:true,notes:['4.7★ (298,311) — worth climbing to the top for the view.']},
+{id:'p160',name:'Arc de Triomphe',category:'activity',neighborhood:'8th arr.',lat:48.8737917,lng:2.2950275,address:'Pl. Charles de Gaulle, 75008 Paris',trust:'landmark',confirmed:true,notes:['4.7★ (298,311) — worth climbing to the top for the view.']},
 {id:'p161',name:'Bar Nouveau',category:'bar',neighborhood:'3rd arr.',lat:48.8614263,lng:2.3575819,address:'5 Rue des Haudriettes, 75003 Paris',trust:'base',confirmed:true,notes:['Art nouveau-style cocktail bar, 4.7★ (687).']},
 {id:'p162',name:'Harold',category:'shop',neighborhood:'4th arr.',lat:48.8595611,lng:2.3558365,address:'32 Rue des Blancs Manteaux, 75004 Paris',trust:'base',confirmed:true,notes:["Men's clothing store, 4.9★ (104)."]},
 {id:'p163',name:'Rue Mouffetard',category:'activity',neighborhood:'5th arr.',lat:48.8404307,lng:2.3498002,address:'139 Rue Mouffetard, 75005 Paris',trust:'base',confirmed:true,notes:['Historic open-air market street, 4.5★ (2,128).']},
@@ -1356,6 +1376,17 @@ const PLACES = [
 {id:'p189',name:'Espace Dalí (the Dalí museum)',category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8865119,lng:2.3398718,address:'11 Rue Poulbot, 75018 Paris',trust:'trusted',confirmed:true,notes:["Private Dalí museum/gallery in Montmartre — sculptures, drawings, and paintings, small but dense, 4.5★ (3,316). Not on the Paris Museum Pass. Been here before."]},
 {id:'p190',name:"Halle Saint-Pierre (Musée d'Art Naïf)",category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8847467,lng:2.3445132,address:'2 Rue Ronsard, 75018 Paris',trust:'trusted',confirmed:true,notes:["Cultural center at the base of the Sacré-Cœur steps — outsider/naïve art exhibits, a bookstore, and a café, 4.5★ (2,360). Bookstore and café are free to enter; the exhibits need a ticket. Been here before."]},
 {id:'p191',name:'Café Le Nazir',category:'restaurant',neighborhood:'18th arr., Montmartre',lat:48.8858481,lng:2.3351855,address:'56 Rue des Abbesses, 75018 Paris',trust:'trusted',confirmed:true,notes:['Bistro on Rue des Abbesses, open late (until 2am) — good for breakfast or dinner, mixed cheese/meat boards, onion soup, duck confit, 4.3★ (1,627). Been here before.']},
+
+// ---------- THE CLASSICS (olive) ----------
+{id:'p192',name:'Notre-Dame Cathedral',category:'activity',neighborhood:'4th arr., Île de la Cité',lat:48.8529682,lng:2.3499021,address:'6 Parvis Notre-Dame, 75004 Paris',trust:'landmark',confirmed:true,notes:['Reopened after the 2019 fire and restoration — free entry, but reserve a timed slot online to skip the walk-up line, 4.7★ (103,409).']},
+{id:'p193',name:'Panthéon',category:'activity',neighborhood:'5th arr., Latin Quarter',lat:48.8462218,lng:2.3464138,address:'Pl. du Panthéon, 75005 Paris',trust:'landmark',confirmed:true,notes:['Domed monument and crypt honoring major French historical figures — near the Sorbonne and Luxembourg Gardens, 4.6★ (70,666).']},
+{id:'p194',name:'Jardin du Luxembourg',category:'park',neighborhood:'6th arr.',lat:48.8466144,lng:2.3363309,address:'75006 Paris',trust:'landmark',confirmed:true,notes:['Formal gardens with the Medici Fountain and iconic green chairs — a favorite for a slow stroll or picnic, 4.7★ (130,476).']},
+{id:'p195',name:'Place de la Concorde',category:'activity',neighborhood:'8th arr.',lat:48.8655842,lng:2.3205491,address:'Pl. de la Concorde, 75008 Paris',trust:'landmark',confirmed:true,notes:['Grand public square between the Tuileries and the Champs-Élysées, with the Luxor Obelisk at its center.']},
+{id:'p196',name:'Jardin des Tuileries',category:'park',neighborhood:'1st arr.',lat:48.8634916,lng:2.3274943,address:'75001 Paris',trust:'landmark',confirmed:true,notes:["Formal garden linking the Louvre to Place de la Concorde — classic gravel paths, sculptures, and the Orangerie at its western end, 4.6★ (120,003)."]},
+{id:'p197',name:'Conciergerie',category:'museum',neighborhood:'1st arr., Île de la Cité',lat:48.8560114,lng:2.3454953,address:'2 Boulevard du Palais, 75001 Paris',trust:'landmark',confirmed:true,notes:['Former royal palace and Revolution-era prison (Marie Antoinette was held here) — right next to Sainte-Chapelle, often paired as one visit, 4.4★ (11,819).']},
+{id:'p198',name:'Pont Alexandre III',category:'activity',neighborhood:'7th/8th arr. border',lat:48.8637512,lng:2.3135664,address:'Pont Alexandre III, Paris',trust:'landmark',confirmed:true,notes:['The most ornate bridge in Paris — gilded statues and lamps, great sightline straight to Les Invalides.']},
+{id:'p199',name:'Champs-Élysées walk',category:'activity',neighborhood:'8th arr.',lat:48.8737917,lng:2.2950275,address:'Av. des Champs-Élysées, 75008 Paris',trust:'landmark',confirmed:true,notes:['Start at the Arc de Triomphe and walk down toward Place de la Concorde — the classic direction, downhill with the view opening up ahead of you the whole way.']},
+{id:'p200',name:'Moulin Rouge',category:'activity',neighborhood:'18th arr., Pigalle',lat:48.8841232,lng:2.3322519,address:'82 Boulevard de Clichy, 75018 Paris',trust:'landmark',confirmed:true,notes:['The famous cabaret — book the show well ahead of time if you want to go in, 4.4★ (19,933).']},
 ];
 
 // Neighborhood-level / general tips that don't map to one address.
@@ -1499,6 +1530,7 @@ map.addLayer(keyLayer);
 
 function pinColor(place) {
   if (place.trust === 'key') return '#AD4D8C';
+  if (place.trust === 'landmark') return '#808000';
   return place.trust === 'trusted' ? '#B8E3E9' : '#CC7722';
 }
 
@@ -1545,10 +1577,41 @@ function passesFilters(place) {
   return true;
 }
 
+// ---------- Filter status banner + clear-all ----------
+function updateFilterStatus(count) {
+  const row = document.getElementById('filterStatusRow');
+  const text = document.getElementById('filterStatusText');
+  const anyFilterActive = activeCategories.size > 0 || activeListFilter !== 'all' || searchQuery !== '';
+  if (!anyFilterActive) {
+    row.style.display = 'none';
+    return;
+  }
+  row.style.display = 'flex';
+  text.textContent = count === 0 ? 'No matches' : `${count} shown`;
+}
+
+function clearAllFilters() {
+  activeCategories.clear();
+  document.querySelectorAll('#categoryChips .chip').forEach(c => c.classList.remove('active'));
+  activeListFilter = 'all';
+  document.querySelectorAll('#listChips .chip').forEach(c => c.classList.remove('active'));
+  document.querySelector('#listChips .chip[data-list="all"]').classList.add('active');
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  refreshCurrentView();
+}
+document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+
+// Debounced so the map doesn't jump on every single keystroke, but still
+// settles on the result(s) shortly after you stop typing — this is what
+// fixes "I search and nothing visibly happens."
+let searchZoomTimer = null;
+
 function rebuildMarkers() {
   clusterGroup.clearLayers();
   keyLayer.clearLayers();
   for (const id in markerById) delete markerById[id];
+  const matchedLatLngs = [];
   allPlaces.forEach(place => {
     if (place.lat == null || place.lng == null) return;
     if (!passesFilters(place)) return;
@@ -1556,12 +1619,25 @@ function rebuildMarkers() {
     marker.on('click', () => openDrawer(place.id));
     marker.bindTooltip(place.name, { direction: 'top', offset: [0, -10] });
     markerById[place.id] = marker;
+    matchedLatLngs.push([place.lat, place.lng]);
     if (place.trust === 'key') {
       keyLayer.addLayer(marker);
     } else {
       clusterGroup.addLayer(marker);
     }
   });
+  updateFilterStatus(matchedLatLngs.length);
+  if (searchQuery) {
+    clearTimeout(searchZoomTimer);
+    searchZoomTimer = setTimeout(() => {
+      if (matchedLatLngs.length === 1) {
+        map.setView(matchedLatLngs[0], 16);
+      } else if (matchedLatLngs.length > 1) {
+        map.fitBounds(matchedLatLngs, { padding: [40, 40], maxZoom: 16 });
+      }
+      // 0 matches: leave the map where it is — the status banner already says "No matches."
+    }, 350);
+  }
 }
 
 // ---------- Category chips ----------
@@ -1590,6 +1666,11 @@ document.getElementById('listChips').addEventListener('click', (e) => {
   document.querySelectorAll('#listChips .chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   activeListFilter = btn.dataset.list;
+  // Switching which list you're viewing should show everything on that
+  // list — clear any leftover search text so it can't silently keep
+  // filtering out items that don't happen to match it.
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
   refreshCurrentView();
 });
 document.querySelector('#listChips .chip[data-list="all"]').classList.add('active');
@@ -1628,6 +1709,7 @@ function renderListView() {
   const confirmedOnly = allPlaces.filter(p => p.lat != null && p.lng != null);
   const filtered = confirmedOnly.filter(passesFilters);
   document.getElementById('listCount').textContent = `${filtered.length} place${filtered.length === 1 ? '' : 's'}`;
+  updateFilterStatus(filtered.length);
   if (!filtered.length) {
     container.innerHTML = '<div class="empty-note">Nothing matches — try clearing a filter.</div>';
     return;
@@ -1640,7 +1722,7 @@ function renderListView() {
       card.className = 'place-card';
       const status = getListStatus(place.id);
       const catLabel = (CATEGORIES.find(c => c.id === place.category) || {}).label || place.category;
-      const dotColor = place.trust === 'key' ? 'key' : (place.trust === 'trusted' ? 'trust' : 'base');
+      const dotColor = place.trust === 'key' ? 'key' : place.trust === 'landmark' ? 'landmark' : (place.trust === 'trusted' ? 'trust' : 'base');
       card.innerHTML = `
         <div class="row1">
           <div>
@@ -1649,7 +1731,7 @@ function renderListView() {
           </div>
           <div class="status-badges">
             ${status.want ? '<span class="status-dot want" title="Want to try"></span>' : ''}
-            ${status.approved ? '<span class="status-dot approved" title="Approved"></span>' : ''}
+            ${status.approved ? '<span class="status-dot approved" title="Today\'s itinerary"></span>' : ''}
             ${status.visited ? '<span class="status-dot visited" title="Visited"></span>' : ''}
           </div>
         </div>
@@ -1668,6 +1750,7 @@ function renderAreaView() {
     if (searchQuery && !(n.neighborhood + ' ' + n.text).toLowerCase().includes(searchQuery)) return false;
     return true;
   });
+  updateFilterStatus(filtered.length);
   if (!filtered.length) {
     container.innerHTML = '<div class="empty-note">No neighborhood notes match.</div>';
     return;
@@ -1685,6 +1768,9 @@ function renderAreaView() {
 
 // ---------- Needs-location view ----------
 function renderNeedsView() {
+  // Filters/search don't apply here — this list is always everything
+  // unconfirmed, so the filter-status banner would be misleading.
+  document.getElementById('filterStatusRow').style.display = 'none';
   const container = document.getElementById('needsContainer');
   container.innerHTML = '';
   const unconfirmed = allPlaces.filter(p => p.lat == null || p.lng == null);
@@ -1728,7 +1814,7 @@ function openDrawer(id) {
   const place = findPlace(id);
   if (!place) return;
   const catLabel = (CATEGORIES.find(c => c.id === place.category) || {}).label || place.category;
-  const dotColor = place.trust === 'key' ? '#AD4D8C' : (place.trust === 'trusted' ? '#B8E3E9' : '#CC7722');
+  const dotColor = place.trust === 'key' ? '#AD4D8C' : place.trust === 'landmark' ? '#808000' : (place.trust === 'trusted' ? '#B8E3E9' : '#CC7722');
   const status = getListStatus(id);
   const savedNote = userNotes[id] || '';
 
@@ -1750,7 +1836,7 @@ function openDrawer(id) {
     <label>Lists</label>
     <div class="list-toggles">
       <button class="list-toggle ${status.want ? 'on want' : ''}" data-key="want">Want to try</button>
-      <button class="list-toggle ${status.approved ? 'on approved' : ''}" data-key="approved">Approved</button>
+      <button class="list-toggle ${status.approved ? 'on approved' : ''}" data-key="approved">Today's itinerary</button>
       <button class="list-toggle ${status.visited ? 'on visited' : ''}" data-key="visited">Visited</button>
     </div>
   `;
@@ -1804,6 +1890,10 @@ CATEGORIES.forEach(cat => {
 document.getElementById('addPlaceBtn').addEventListener('click', () => {
   addPlaceForm.reset();
   document.getElementById('coordsFields').style.display = 'block';
+  const statusEl = document.getElementById('locationStatus');
+  statusEl.style.display = 'none';
+  statusEl.className = '';
+  statusEl.textContent = '';
   addModalBackdrop.classList.add('visible');
 });
 document.getElementById('cancelAddBtn').addEventListener('click', () => {
@@ -1814,6 +1904,46 @@ addModalBackdrop.addEventListener('click', (e) => {
 });
 document.getElementById('f_unconfirmed').addEventListener('change', (e) => {
   document.getElementById('coordsFields').style.display = e.target.checked ? 'none' : 'block';
+});
+
+document.getElementById('useMyLocationBtn').addEventListener('click', (e) => {
+  const btn = e.target;
+  const statusEl = document.getElementById('locationStatus');
+  statusEl.className = '';
+  statusEl.style.display = 'block';
+
+  if (!('geolocation' in navigator)) {
+    statusEl.textContent = "Your browser can't get your location here.";
+    statusEl.classList.add('error');
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.textContent = 'Finding you…';
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      document.getElementById('f_lat').value = pos.coords.latitude.toFixed(6);
+      document.getElementById('f_lng').value = pos.coords.longitude.toFixed(6);
+      statusEl.textContent = 'Got it — coordinates filled in.';
+      statusEl.classList.add('success');
+      btn.disabled = false;
+    },
+    (err) => {
+      let msg = "Couldn't get your location.";
+      if (err.code === err.PERMISSION_DENIED) {
+        msg = 'Location permission denied — you can allow it in your browser settings, or enter coordinates by hand.';
+      } else if (err.code === err.POSITION_UNAVAILABLE) {
+        msg = "Location isn't available right now — try again, or enter coordinates by hand.";
+      } else if (err.code === err.TIMEOUT) {
+        msg = 'Timed out finding you — try again, or enter coordinates by hand.';
+      }
+      statusEl.textContent = msg;
+      statusEl.classList.add('error');
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
 });
 
 addPlaceForm.addEventListener('submit', (e) => {
