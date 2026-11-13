@@ -761,6 +761,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     --key-pin-deep:#7a3661;
     --landmark-pin:#808000;
     --landmark-pin-deep:#5c5c00;
+    --earful-pin:#8B5A2B;
+    --earful-pin-deep:#5f3b1a;
     --danger:#b5462f;
     --shadow:0 2px 10px rgba(31,36,48,0.08);
   }
@@ -861,6 +863,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .dot.trust{background:var(--trust-pin);}
   .dot.key{background:var(--key-pin);}
   .dot.landmark{background:var(--landmark-pin);}
+  .dot.earful{background:var(--earful-pin);}
+  #storageWarning{display:none;background:#fff4e0;border-bottom:1px solid #e0b866;color:#6b4a10;font-size:12.5px;line-height:1.4;padding:9px 18px;}
 
   .filter-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 18px;background:var(--card);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);}
   .filter-status-row #clearFiltersBtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
@@ -1014,12 +1018,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <header>
     <div>
       <h1>Paris, curated</h1>
-      <div class="tag">Ochre pins = the general pile · blue pins = trusted · orchid pins = stays & key addresses</div>
+      <div class="tag">Ochre pins = the general pile · blue pins = trusted · orchid pins = stays & key addresses · olive = classics · brown = Earful Tower picks</div>
     </div>
     <div class="header-actions">
+      <button class="btn" id="backupBtn" type="button" title="Download a copy of your notes, lists and added pins">Back up</button>
+      <button class="btn" id="restoreBtn" type="button" title="Load a backup file">Restore</button>
+      <input type="file" id="restoreFile" accept="application/json,.json" style="display:none">
       <button class="btn primary" id="addPlaceBtn">+ Add a place</button>
     </div>
   </header>
+  <div id="storageWarning" role="alert"></div>
 
   <nav class="tabs">
     <button class="tab-btn active" data-view="map">Map</button>
@@ -1047,6 +1055,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <span><span class="dot trust"></span>Trusted</span>
     <span><span class="dot key"></span>Stays & key addresses</span>
     <span><span class="dot landmark"></span>Classics</span>
+    <span><span class="dot earful"></span>Earful Tower picks</span>
   </div>
 
   <main>
@@ -1142,7 +1151,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </script>
 <script>
 // Paris trip planner — seed data
-// trust: 'trusted' (Mollie + the first trusted Google list) / 'base' (everyone else) / 'key' (our own stays & key addresses — not a recommendation, just somewhere we need to find) / 'landmark' (the famous Paris classics — olive pins)
+// trust: 'trusted' (Mollie + the first trusted Google list) / 'base' (everyone else) / 'key' (our own stays & key addresses — not a recommendation, just somewhere we need to find) / 'landmark' (the famous Paris classics — olive pins) / 'earful' (picks from The Earful Tower's 18th-arrondissement guide — warm brown pins)
 // confirmed: false means no reliable lat/lng — shown in panel only, never on the map
 
 function gmaps(name, address) {
@@ -1254,7 +1263,7 @@ const PLACES = [
 {id:'p81',name:'Atelier des Lumières',category:'museum',neighborhood:'11th arr.',lat:48.864600,lng:2.376700,address:'38 Rue Saint-Maur, 75011 Paris',trust:'base',confirmed:true,notes:['Immersive digital art projections — double check the address, there\'s a similarly-named lamp store across town.']},
 {id:'p82',name:'The Louvre',category:'museum',neighborhood:'1st arr.',lat:48.860600,lng:2.337600,address:'Rue de Rivoli, 75001 Paris',trust:'landmark',confirmed:true,notes:["Napoleon III's apartments are a good tip — use the official app for a fast, ~45 min highlights route."]},
 {id:'p83',name:'Musée de la Vie Romantique',category:'museum',neighborhood:'9th arr.',lat:48.879700,lng:2.332700,address:'16 Rue Chaptal, 75009 Paris',trust:'base',confirmed:true,notes:['Smaller, local-flavor museum — cute building with a coffee shop.']},
-{id:'p84',name:'Musée de Montmartre',category:'museum',neighborhood:'18th arr.',lat:48.888600,lng:2.340600,address:'12 Rue Cortot, 75018 Paris',trust:'base',confirmed:true,notes:['Local history museum.']},
+{id:'p84',name:'Musée de Montmartre',category:'museum',neighborhood:'18th arr.',lat:48.888600,lng:2.340600,address:'12 Rue Cortot, 75018 Paris',trust:'earful',confirmed:true,notes:['Local history museum.',"The guide's pick if you only have time for one museum in Montmartre — it's around the corner from the Dalí museum.",'Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
 {id:'p85',name:'Palais Garnier',category:'museum',neighborhood:'9th arr.',lat:48.871900,lng:2.331600,address:'Place de l\'Opéra, 75009 Paris',trust:'base',confirmed:true,notes:['Worth visiting even without a show — tours available.']},
 {id:'p86',name:'Musée Rodin',category:'museum',neighborhood:'7th arr.',lat:48.855307,lng:2.315835,address:'77 Rue de Varenne, 75007 Paris',trust:'base',confirmed:true,notes:['"Love Musée Rodin — beautiful house with amazing grounds, small so no fatigue!"']},
 {id:'p87',name:'Musée Marmottan Monet',category:'museum',neighborhood:'16th arr.',lat:48.859261,lng:2.267228,address:'2 Rue Louis Boilly, 75016 Paris',trust:'base',confirmed:true,notes:['A repeated favorite.']},
@@ -1373,8 +1382,8 @@ const PLACES = [
 {id:'p188',name:'123 mon école (Montessori, Paris XV)',category:'key',neighborhood:'15th arr.',lat:48.84747,lng:2.2993,address:'28 Rue Frémicourt, 75015 Paris',trust:'key',confirmed:true,notes:['Bilingual international Montessori school — visiting for work. Phone (+33) 1 71 37 32 46 · paris15@123monecole.com · www.123monecole.com. (Two Google listings exist for this school a few blocks apart; this address matches the school\'s own official directory listing for the Paris XV site.)']},
 
 // ---------- MORE MONTMARTRE: Dalí, Halle Saint-Pierre, Le Nazir ----------
-{id:'p189',name:'Espace Dalí (the Dalí museum)',category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8865119,lng:2.3398718,address:'11 Rue Poulbot, 75018 Paris',trust:'trusted',confirmed:true,notes:["Private Dalí museum/gallery in Montmartre — sculptures, drawings, and paintings, small but dense, 4.5★ (3,316). Not on the Paris Museum Pass. Been here before."]},
-{id:'p190',name:"Halle Saint-Pierre (Musée d'Art Naïf)",category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8847467,lng:2.3445132,address:'2 Rue Ronsard, 75018 Paris',trust:'trusted',confirmed:true,notes:["Cultural center at the base of the Sacré-Cœur steps — outsider/naïve art exhibits, a bookstore, and a café, 4.5★ (2,360). Bookstore and café are free to enter; the exhibits need a ticket. Been here before."]},
+{id:'p189',name:'Espace Dalí (the Dalí museum)',category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8865119,lng:2.3398718,address:'11 Rue Poulbot, 75018 Paris',trust:'trusted',confirmed:true,notes:["Private Dalí museum/gallery in Montmartre — sculptures, drawings, and paintings, small but dense, 4.5★ (3,316). Not on the Paris Museum Pass. Been here before.","Lithographs can be bought downstairs. The guide says if you only have time for one museum, pick the Musée de Montmartre instead.","Source: The Earful Tower, 18th arrondissement guide (Jun 2026)."]},
+{id:'p190',name:"Halle Saint-Pierre (Musée d'Art Naïf)",category:'museum',neighborhood:'18th arr., Montmartre',lat:48.8847467,lng:2.3445132,address:'2 Rue Ronsard, 75018 Paris',trust:'trusted',confirmed:true,notes:["Cultural center at the base of the Sacré-Cœur steps — outsider/naïve art exhibits, a bookstore, and a café, 4.5★ (2,360). Bookstore and café are free to enter; the exhibits need a ticket. Been here before.","The interior is stunning — best seen from the top of the staircase, and even a quick visit is worth it.","Source: The Earful Tower, 18th arrondissement guide (Jun 2026)."]},
 {id:'p191',name:'Café Le Nazir',category:'restaurant',neighborhood:'18th arr., Montmartre',lat:48.8858481,lng:2.3351855,address:'56 Rue des Abbesses, 75018 Paris',trust:'trusted',confirmed:true,notes:['Bistro on Rue des Abbesses, open late (until 2am) — good for breakfast or dinner, mixed cheese/meat boards, onion soup, duck confit, 4.3★ (1,627). Been here before.']},
 
 // ---------- THE CLASSICS (olive) ----------
@@ -1387,6 +1396,18 @@ const PLACES = [
 {id:'p198',name:'Pont Alexandre III',category:'activity',neighborhood:'7th/8th arr. border',lat:48.8637512,lng:2.3135664,address:'Pont Alexandre III, Paris',trust:'landmark',confirmed:true,notes:['The most ornate bridge in Paris — gilded statues and lamps, great sightline straight to Les Invalides.']},
 {id:'p199',name:'Champs-Élysées walk',category:'activity',neighborhood:'8th arr.',lat:48.8737917,lng:2.2950275,address:'Av. des Champs-Élysées, 75008 Paris',trust:'landmark',confirmed:true,notes:['Start at the Arc de Triomphe and walk down toward Place de la Concorde — the classic direction, downhill with the view opening up ahead of you the whole way.']},
 {id:'p200',name:'Moulin Rouge',category:'activity',neighborhood:'18th arr., Pigalle',lat:48.8841232,lng:2.3322519,address:'82 Boulevard de Clichy, 75018 Paris',trust:'landmark',confirmed:true,notes:['The famous cabaret — book the show well ahead of time if you want to go in, 4.4★ (19,933).']},
+
+// ---------- THE EARFUL TOWER'S 18th ARRONDISSEMENT GUIDE (warm brown) ----------
+// Streets/alleys are pinned at the best place to START walking them; the note says which way to go.
+{id:'p201',name:'Le Moulin de la Galette',category:'restaurant',neighborhood:'18th arr., Montmartre',lat:48.8873961,lng:2.3371292,address:'83 Rue Lepic, 75018 Paris',trust:'earful',confirmed:true,notes:['Restaurant tucked under an old wooden windmill — the guide praises the ambience, the "A game" waiters, and a setting like a Renoir painting. Google: 4.4★ (5,539).','Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p202',name:'Terrass Rooftop Bar',category:'bar',neighborhood:'18th arr., Montmartre',lat:48.8865373,lng:2.3331943,address:'12 Rue Joseph de Maistre, 75018 Paris',trust:'earful',confirmed:true,notes:['Rooftop bar at the Terrass Hotel — the guide calls it the best view from a bar or restaurant in the 18th, and it is open to people not staying at the hotel. Google: 4.3★ (1,482).','Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p203',name:'Bønne Café',category:'cafe',neighborhood:'18th arr., near Sacré-Cœur',lat:48.8889956,lng:2.3468043,address:'56 Rue Labat, 75018 Paris',trust:'earful',confirmed:true,notes:['New café near Sacré-Cœur run by a Norwegian–Turkish couple; the cosy interior used to be a butcher\'s shop and kept some original details. Google reviewers rave about the cardamom bun, 4.8★ (182).','Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p204',name:'Les Pirates de Montmartre (La Poissonnerie)',category:'bar',neighborhood:'18th arr., Montmartre',lat:48.8932651,lng:2.3424383,address:'63 Rue Duhesme, 75018 Paris',trust:'earful',confirmed:true,notes:['Local fish-and-oyster bar where the guide\'s author recorded a podcast conversation — a neighborhood spot rather than a tourist one.','Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p205',name:'Le Très Particulier (hidden hotel bar)',category:'bar',neighborhood:'18th arr., Montmartre',lat:48.8879064,lng:2.3353175,address:'23 Av. Junot, Pavillon D, 75018 Paris',trust:'earful',confirmed:true,notes:['Discreet, hard-to-find cocktail bar tucked away at Hôtel Particulier, through the garden — right next door to Villa Léandre. Google: 4.0★ (894).','From Google reviews: use the entrance on Avenue Junot and ring the bell, saying you want the bar or have a reservation.','Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p206',name:'Rue Cavallotti (shutter street art)',category:'activity',neighborhood:'18th arr., near Place de Clichy',lat:48.8860,lng:2.3283,address:'Rue Cavallotti, 75018 Paris',trust:'earful',confirmed:true,notes:["Street art painted on shop shutters — Belle Époque-style posters and portraits honoring Montmartre's past (Le Chat Noir, Moulin Rouge, Toulouse-Lautrec posters, Jane Avril, Mistinguett). Go early in the morning, before the shops raise their shutters, or the art is hidden.","Where to start: come out of Place de Clichy metro (lines 2 & 13), find Rue Forest just past the big block with a Flunch and Castorama, and walk north — Rue Forest turns straight into Rue Cavallotti, so you land on the street from the metro end. The Moulin Rouge is a short walk from here. (Pin sits at that end; the guide doesn't say which direction is best, so this is the easiest way in.)",'Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p207',name:'Rue des Abbesses (stroll)',category:'activity',neighborhood:'18th arr., Montmartre',lat:48.8843091,lng:2.3387397,address:'Place des Abbesses, 75018 Paris',trust:'earful',confirmed:true,notes:["One of the guide author's favorite streets for strolling — restaurants, bars, cafés and boutiques, with a mix of tourists and locals. It's due to be pedestrianized soon.","Where to start: Place des Abbesses (metro Abbesses — the pin is here), then stroll northwest along Rue des Abbesses toward Rue Lepic. Café Le Nazir (no. 56) is on the way, and Rue Lepic then leads on to Le Moulin de la Galette.",'Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p208',name:'Villa Léandre',category:'activity',neighborhood:'18th arr., Montmartre',lat:48.8883776,lng:2.3350573,address:'25 Avenue Junot, 75018 Paris',trust:'earful',confirmed:true,notes:["Leafy, English-style cul-de-sac of cottage-like houses (built 1926; No. 10 has a \"Downing Street\" sign) — one of the best hidden corners of the 18th and a quiet escape from the crowds higher up the hill. It's residential, so keep your voice down.","Where to start: the only way in is the entrance at 25 Avenue Junot — walk to the lamppost at the far end and come back out. Nearest metro Lamarck–Caulaincourt (line 12); Le Très Particulier bar is next door (no. 23) if you want a drink after.",'Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
+{id:'p209',name:'Bar Bleu',category:'bar',neighborhood:'18th arr., Montmartre',lat:48.8843534,lng:2.3411537,address:'15 Rue des Trois Frères, 75018 Paris',trust:'earful',confirmed:true,notes:['Small, friendly Montmartre bar with cocktails, wine and tapas — reviewers praise the cocktails, the Korean chicken and the owner. Google: 4.7★ (162). Closed Sundays and Mondays per Google; one reviewer notes a 10 € minimum on card payments and that it gets warm inside.','Source: The Earful Tower.']},
 ];
 
 // Neighborhood-level / general tips that don't map to one address.
@@ -1441,9 +1462,36 @@ function saveJSON(key, value) {
     return true;
   } catch (e) {
     console.error('Storage write failed', key, e);
+    showStorageWarning("This browser just refused to save — your latest change won't be here next time. Open the app from its web address in Safari/Chrome (not a preview or in-app browser), or use Back up to keep a copy.");
     return false;
   }
 }
+
+// Persistence safety net. Browsers can refuse or silently drop localStorage
+// (private tabs, in-app browsers, previews, file:// copies, iOS clearing idle
+// sites). Probe it up front, ask the browser to treat our data as persistent,
+// and say so out loud if saving isn't going to stick.
+function showStorageWarning(msg) {
+  const el = document.getElementById('storageWarning');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+(function checkStorage() {
+  let ok = false;
+  try {
+    const k = '__parisApp_probe';
+    localStorage.setItem(k, '1');
+    ok = localStorage.getItem(k) === '1';
+    localStorage.removeItem(k);
+  } catch (e) { ok = false; }
+  if (!ok) {
+    showStorageWarning("Heads up: this browser isn't saving your notes or itinerary between visits (private mode, an in-app browser or a preview can do this). Open the app from its web address in Safari/Chrome — or Add to Home Screen — and use Back up to keep a copy.");
+  }
+  try {
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist();
+  } catch (e) {}
+})();
 
 let userNotes = loadJSON(LS_KEYS.userNotes, {});
 let lists = loadJSON(LS_KEYS.lists, {});
@@ -1531,6 +1579,7 @@ map.addLayer(keyLayer);
 function pinColor(place) {
   if (place.trust === 'key') return '#AD4D8C';
   if (place.trust === 'landmark') return '#808000';
+  if (place.trust === 'earful') return '#8B5A2B';
   return place.trust === 'trusted' ? '#B8E3E9' : '#CC7722';
 }
 
@@ -1722,7 +1771,7 @@ function renderListView() {
       card.className = 'place-card';
       const status = getListStatus(place.id);
       const catLabel = (CATEGORIES.find(c => c.id === place.category) || {}).label || place.category;
-      const dotColor = place.trust === 'key' ? 'key' : place.trust === 'landmark' ? 'landmark' : (place.trust === 'trusted' ? 'trust' : 'base');
+      const dotColor = place.trust === 'key' ? 'key' : place.trust === 'landmark' ? 'landmark' : place.trust === 'earful' ? 'earful' : (place.trust === 'trusted' ? 'trust' : 'base');
       card.innerHTML = `
         <div class="row1">
           <div>
@@ -1814,7 +1863,7 @@ function openDrawer(id) {
   const place = findPlace(id);
   if (!place) return;
   const catLabel = (CATEGORIES.find(c => c.id === place.category) || {}).label || place.category;
-  const dotColor = place.trust === 'key' ? '#AD4D8C' : place.trust === 'landmark' ? '#808000' : (place.trust === 'trusted' ? '#B8E3E9' : '#CC7722');
+  const dotColor = place.trust === 'key' ? '#AD4D8C' : place.trust === 'landmark' ? '#808000' : place.trust === 'earful' ? '#8B5A2B' : (place.trust === 'trusted' ? '#B8E3E9' : '#CC7722');
   const status = getListStatus(id);
   const savedNote = userNotes[id] || '';
 
@@ -1853,18 +1902,26 @@ function openDrawer(id) {
     });
   });
 
-  let saveTimer = null;
+  // Save the instant the text changes (no delay) — a delayed save is lost if
+  // the phone is locked or the tab is switched before the timer fires. Also
+  // re-save on change/blur to catch autocorrect and dictation commits.
+  let flashTimer = null;
   const noteBox = drawer.querySelector('#userNoteBox');
-  noteBox.addEventListener('input', () => {
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      userNotes[id] = noteBox.value;
-      saveJSON(LS_KEYS.userNotes, userNotes);
-      const flash = drawer.querySelector('#savedFlash');
+  const saveNote = () => {
+    userNotes[id] = noteBox.value;
+    const ok = saveJSON(LS_KEYS.userNotes, userNotes);
+    const flash = drawer.querySelector('#savedFlash');
+    if (!flash) return;
+    flash.textContent = ok ? 'Saved' : "Couldn't save";
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => {
       flash.classList.add('show');
       setTimeout(() => flash.classList.remove('show'), 1200);
-    }, 500);
-  });
+    }, 300);
+  };
+  noteBox.addEventListener('input', saveNote);
+  noteBox.addEventListener('change', saveNote);
+  noteBox.addEventListener('blur', saveNote);
 
   drawer.classList.add('visible');
   drawerBackdrop.classList.add('visible');
@@ -1944,6 +2001,55 @@ document.getElementById('useMyLocationBtn').addEventListener('click', (e) => {
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
   );
+});
+
+// ---------- Back up / restore ----------
+// A plain-file copy of everything you've added (notes, Want to try / Today's
+// itinerary / Visited, and your own pins) so nothing depends on one browser.
+document.getElementById('backupBtn').addEventListener('click', () => {
+  const data = {
+    app: 'paris-trip-planner',
+    savedAt: new Date().toISOString(),
+    userNotes, lists, customPlaces, customAreaNotes,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'paris-trip-backup.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+document.getElementById('restoreBtn').addEventListener('click', () => {
+  document.getElementById('restoreFile').click();
+});
+document.getElementById('restoreFile').addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data || data.app !== 'paris-trip-planner') throw new Error('not a backup');
+      // Merge rather than replace, so restoring never wipes newer changes.
+      Object.assign(userNotes, data.userNotes || {});
+      Object.keys(data.lists || {}).forEach(k => { lists[k] = data.lists[k]; });
+      const have = new Set(customPlaces.map(p => p.id));
+      (data.customPlaces || []).forEach(p => { if (!have.has(p.id)) customPlaces.push(p); });
+      saveJSON(LS_KEYS.userNotes, userNotes);
+      saveJSON(LS_KEYS.lists, lists);
+      saveJSON(LS_KEYS.customPlaces, customPlaces);
+      allPlaces = [...PLACES, ...customPlaces];
+      refreshCurrentView();
+      alert('Backup restored.');
+    } catch (err) {
+      alert("That file doesn't look like a Paris backup.");
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
 });
 
 addPlaceForm.addEventListener('submit', (e) => {
