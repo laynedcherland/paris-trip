@@ -857,7 +857,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
   .chip-row{display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;padding-bottom:2px;}
 
-  .legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--ink-soft);padding:0 18px 10px;background:var(--card);}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--ink-soft);padding:0 14px 10px;background:var(--card);}
+  .legend-chip{display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink-soft);cursor:pointer;font-family:inherit;}
+  .legend-chip.active{border-color:var(--ink);background:var(--paper);color:var(--ink);font-weight:600;}
+  .sort-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;}
+  .sort-row select{border:1px solid var(--line);border-radius:8px;background:#fff;padding:4px 8px;font-size:12.5px;color:var(--ink);}
   .legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle;}
   .dot.base{background:var(--base-pin);}
   .dot.trust{background:var(--trust-pin);}
@@ -1050,12 +1054,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <span id="filterStatusText"></span>
     <button id="clearFiltersBtn" type="button">Clear filters</button>
   </div>
-  <div class="legend">
-    <span><span class="dot base"></span>General recs</span>
-    <span><span class="dot trust"></span>Trusted</span>
-    <span><span class="dot key"></span>Stays & key addresses</span>
-    <span><span class="dot landmark"></span>Classics</span>
-    <span><span class="dot earful"></span>Earful Tower picks</span>
+  <div class="legend" id="legendChips" title="Tap a color to show only those pins">
+    <button type="button" class="legend-chip" data-trust="base"><span class="dot base"></span>General recs</button>
+    <button type="button" class="legend-chip" data-trust="trusted"><span class="dot trust"></span>Trusted</button>
+    <button type="button" class="legend-chip" data-trust="key"><span class="dot key"></span>Stays & key addresses</button>
+    <button type="button" class="legend-chip" data-trust="landmark"><span class="dot landmark"></span>Classics</button>
+    <button type="button" class="legend-chip" data-trust="earful"><span class="dot earful"></span>Earful Tower picks</button>
   </div>
 
   <main>
@@ -1063,6 +1067,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
     <div class="view-panel" id="listView">
       <div class="section-title" id="listCount"></div>
+      <div class="sort-row"><label for="sortSelect">Sort</label><select id="sortSelect"><option value="name">A–Z</option><option value="color">Pin color</option></select></div>
       <div id="listContainer"></div>
     </div>
 
@@ -1162,6 +1167,7 @@ function gmaps(name, address) {
 const CATEGORIES = [
   { id: 'restaurant', label: 'Restaurants' },
   { id: 'cafe', label: 'Cafés & bakeries' },
+  { id: 'tea', label: 'Tea houses' },
   { id: 'bar', label: 'Bars & nightlife' },
   { id: 'music', label: 'Live music' },
   { id: 'museum', label: 'Museums & landmarks' },
@@ -1204,7 +1210,7 @@ const PLACES = [
 {id:'p30',name:'Candelaria',category:'bar',neighborhood:'3rd arr.',lat:48.862983,lng:2.364031,address:'52 Rue de Saintonge, 75003 Paris',trust:'base',confirmed:true,notes:['Tequila speakeasy.']},
 {id:'p31',name:'Septime',category:'restaurant',neighborhood:'11th arr.',lat:48.853572,lng:2.380933,address:'80 Rue de Charonne, 75011 Paris',trust:'base',confirmed:true,notes:['Recommended by a follower.']},
 {id:'p32',name:'Bistrot Paul Bert',category:'restaurant',neighborhood:'11th arr.',lat:48.852210,lng:2.385018,address:'18 Rue Paul Bert, 75011 Paris',trust:'base',confirmed:true,notes:['For lunch — pair with Caveau de la Huchette for music after.']},
-{id:'p33',name:'Mariage Frères',category:'cafe',neighborhood:'4th arr.',lat:48.857750,lng:2.356574,address:'30 Rue du Bourg Tibourg, 75004 Paris',trust:'base',confirmed:true,notes:['Tea house — shop or have a meal. "Top tier!"']},
+{id:'p33',name:'Mariage Frères',category:'tea',neighborhood:'4th arr.',lat:48.857750,lng:2.356574,address:'30 Rue du Bourg Tibourg, 75004 Paris',trust:'base',confirmed:true,notes:['Tea house — shop or have a meal. "Top tier!"']},
 {id:'p34',name:'Clown Bar',category:'restaurant',neighborhood:'11th arr.',lat:48.863604,lng:2.367231,address:'114 Rue Amelot, 75011 Paris',trust:'base',confirmed:true,notes:['"You HAVE to go for food, it\'s AMAZING" — recommended by a chef\'s spouse, it\'s his favorite.']},
 {id:'p35',name:'Mokonuts',category:'restaurant',neighborhood:'11th arr.',lat:48.850791,lng:2.381383,address:'5 Rue Saint-Bernard, 75011 Paris',trust:'base',confirmed:true,notes:['Recommended by a follower.']},
 {id:'p36',name:'Berthillon',category:'cafe',neighborhood:'4th arr., Île Saint-Louis',lat:48.851713,lng:2.356721,address:"29 Rue Saint-Louis en l'Île, 75004 Paris",trust:'base',confirmed:true,notes:['Berthillon ice cream — a repeated favorite.']},
@@ -1370,8 +1376,8 @@ const PLACES = [
 {id:'p180',name:'Le Rostand',category:'restaurant',neighborhood:'6th arr.',lat:48.8478176,lng:2.3402706,address:'6 Pl. Edmond Rostand, 75006 Paris',trust:'base',confirmed:true,notes:['Café across from Luxembourg Gardens, 3.4★ (1,260).']},
 
 // ---------- RECS FROM PEOPLE WE KNOW (Instagram) + a country-club rec ----------
-{id:'p181',name:'Alma tea gallery',category:'cafe',neighborhood:'16th arr.',lat:48.8509607,lng:2.2773826,address:'10 Av. de Versailles, 75016 Paris',trust:'base',confirmed:true,notes:['Recommended via Instagram (@almateagallery) by someone we know. A small tea gallery/boutique — matcha and other teas, ceramics, and tea-tasting workshops, 4.7★ (15).']},
-{id:'p182',name:'Wistaria Paris',category:'cafe',neighborhood:'6th arr.',lat:48.8553604,lng:2.3401111,address:'6 Rue du Pont de Lodi, 75006 Paris',trust:'base',confirmed:true,notes:["Recommended via Instagram (@wistariaparis, 丹木青丘) by someone we know. A traditional Chinese/Taiwanese tea salon — gongfu-style service, quiet and calm, 4.8★ (175). Closed Wednesdays."]},
+{id:'p181',name:'Alma tea gallery',category:'tea',neighborhood:'16th arr.',lat:48.8509607,lng:2.2773826,address:'10 Av. de Versailles, 75016 Paris',trust:'base',confirmed:true,notes:['Recommended via Instagram (@almateagallery) by someone we know. A small tea gallery/boutique — matcha and other teas, ceramics, and tea-tasting workshops, 4.7★ (15).']},
+{id:'p182',name:'Wistaria Paris',category:'tea',neighborhood:'6th arr.',lat:48.8553604,lng:2.3401111,address:'6 Rue du Pont de Lodi, 75006 Paris',trust:'base',confirmed:true,notes:["Recommended via Instagram (@wistariaparis, 丹木青丘) by someone we know. A traditional Chinese/Taiwanese tea salon — gongfu-style service, quiet and calm, 4.8★ (175). Closed Wednesdays."]},
 {id:'p183',name:'Birdie Num Num',category:'cafe',neighborhood:'18th arr., Montmartre',lat:48.8903541,lng:2.3351334,address:'91 Rue Lamarck, 75018 Paris',trust:'base',confirmed:true,notes:["Recommended via Instagram (@birdienumxnum) by someone we know. Small vegan café in Montmartre — health bowls, matcha, a changing soup/bowl of the day, 4.9★ (294). Note: a couple of older directories list a 61 Rue de Courcelles (8th) address for a same-named spot — current reviews and listings point to this Montmartre location instead, so that's what's pinned."]},
 {id:'p184',name:'La Galerie Dior (the "Dior museum")',category:'museum',neighborhood:'8th arr., Golden Triangle',lat:48.866847,lng:2.3063837,address:'30 Av. Montaigne, 75008 Paris',trust:'base',confirmed:true,notes:["This is the \"Dior museum\" rec from the lady at the country club where Conner is the pickleball pro. It's La Galerie Dior — the house's own history/exhibition space inside the Avenue Montaigne flagship, roughly 13 rooms tracing Dior from 1947 to now, plus a café/restaurant in the same building, 4.5★ (1,848). Tickets are dated/timed — worth booking ahead."]},
 
@@ -1523,6 +1529,8 @@ function toggleListStatus(id, key) {
 
 // ---------- State ----------
 let activeCategories = new Set(); // empty = all
+let activeTrusts = new Set();     // pin colors; empty = all
+let listSort = 'name';            // 'name' or 'color'
 let activeListFilter = 'all';
 let searchQuery = '';
 let currentView = 'map';
@@ -1616,9 +1624,24 @@ function makeIcon(place) {
 
 const markerById = {};
 
+// Pin-color words you can type into search ("brown", "olive", "blue"…), in
+// addition to filtering with the colored legend buttons.
+const COLOR_WORDS = {
+  base: ['ochre', 'orange', 'general'],
+  trusted: ['blue', 'trusted'],
+  key: ['orchid', 'purple', 'pink', 'stay', 'stays', 'key'],
+  landmark: ['olive', 'green', 'classic', 'classics', 'landmark', 'landmarks'],
+  earful: ['brown', 'earful', 'montmartre-picks'],
+};
+// Order used by "Sort: Pin color" (matches the legend left to right).
+const TRUST_ORDER = ['base', 'trusted', 'key', 'landmark', 'earful'];
+
 function passesFilters(place) {
   if (activeCategories.size && !activeCategories.has(place.category)) return false;
-  if (searchQuery && !place.name.toLowerCase().includes(searchQuery)) return false;
+  if (activeTrusts.size && !activeTrusts.has(place.trust)) return false;
+  if (searchQuery &&
+      !place.name.toLowerCase().includes(searchQuery) &&
+      !(COLOR_WORDS[place.trust] || []).includes(searchQuery)) return false;
   if (activeListFilter !== 'all') {
     const status = getListStatus(place.id);
     if (!status[activeListFilter]) return false;
@@ -1630,7 +1653,7 @@ function passesFilters(place) {
 function updateFilterStatus(count) {
   const row = document.getElementById('filterStatusRow');
   const text = document.getElementById('filterStatusText');
-  const anyFilterActive = activeCategories.size > 0 || activeListFilter !== 'all' || searchQuery !== '';
+  const anyFilterActive = activeCategories.size > 0 || activeTrusts.size > 0 || activeListFilter !== 'all' || searchQuery !== '';
   if (!anyFilterActive) {
     row.style.display = 'none';
     return;
@@ -1640,6 +1663,8 @@ function updateFilterStatus(count) {
 }
 
 function clearAllFilters() {
+  activeTrusts.clear();
+  document.querySelectorAll('#legendChips .legend-chip').forEach(c => c.classList.remove('active'));
   activeCategories.clear();
   document.querySelectorAll('#categoryChips .chip').forEach(c => c.classList.remove('active'));
   activeListFilter = 'all';
@@ -1650,6 +1675,27 @@ function clearAllFilters() {
   refreshCurrentView();
 }
 document.getElementById('clearFiltersBtn').addEventListener('click', clearAllFilters);
+
+// Legend buttons double as pin-color filters (tap one or several).
+document.getElementById('legendChips').addEventListener('click', (e) => {
+  const btn = e.target.closest('.legend-chip');
+  if (!btn) return;
+  const t = btn.dataset.trust;
+  if (activeTrusts.has(t)) {
+    activeTrusts.delete(t);
+    btn.classList.remove('active');
+  } else {
+    activeTrusts.add(t);
+    btn.classList.add('active');
+  }
+  refreshCurrentView();
+});
+
+// List view sort: A–Z or grouped by pin color.
+document.getElementById('sortSelect').addEventListener('change', (e) => {
+  listSort = e.target.value;
+  refreshCurrentView();
+});
 
 // Debounced so the map doesn't jump on every single keystroke, but still
 // settles on the result(s) shortly after you stop typing — this is what
@@ -1765,7 +1811,13 @@ function renderListView() {
   }
   filtered
     .slice()
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => {
+      if (listSort === 'color') {
+        const d = TRUST_ORDER.indexOf(a.trust) - TRUST_ORDER.indexOf(b.trust);
+        if (d) return d;
+      }
+      return a.name.localeCompare(b.name);
+    })
     .forEach(place => {
       const card = document.createElement('div');
       card.className = 'place-card';
