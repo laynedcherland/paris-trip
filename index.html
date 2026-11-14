@@ -876,7 +876,26 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .filter-status-row #clearFiltersBtn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
   .filter-status-row #clearFiltersBtn:hover{background:var(--paper);}
 
-  main{flex:1;position:relative;overflow:hidden;}
+  #filterToggleRow{display:none;}
+  @media (max-width:760px){
+    .app{height:100vh;height:100dvh;overflow:hidden;}
+    header{padding:6px 12px;gap:6px;}
+    header h1{font-size:17px;}
+    header .tag{display:none;}
+    header .btn{padding:5px 9px;font-size:12px;}
+    nav.tabs{padding:2px 6px 0;overflow-x:auto;}
+    nav.tabs button{padding:7px 8px;font-size:12.5px;white-space:nowrap;}
+    #filterToggleRow{display:block;background:var(--card);border-bottom:1px solid var(--line);padding:5px 10px;}
+    #filterToggle{width:100%;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--ink);}
+    #filterToggle .caret{float:right;}
+    #filterToggleInfo{font-weight:400;color:var(--ink-soft);margin-left:4px;}
+    #filterPanel{display:none;max-height:45dvh;overflow-y:auto;border-bottom:1px solid var(--line);}
+    body.filters-open #filterPanel{display:block;}
+    #walkToggle{top:8px;}
+    #walkPanel{max-height:26%;bottom:22px;}
+    #walkPanel .walk-sub{display:none;}
+  }
+  main{flex:1;position:relative;overflow:hidden;min-height:0;}
   #map{position:absolute;inset:0;}
   #walkToggle{position:absolute;top:10px;right:10px;z-index:900;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,.18);}
   #walkToggle.active{background:var(--ink);color:#fff;border-color:var(--ink);}
@@ -1055,6 +1074,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <button class="tab-btn" data-view="needs">Needs a location</button>
   </nav>
 
+  <div id="filterToggleRow"><button type="button" id="filterToggle" aria-expanded="false">Search &amp; filters <span id="filterToggleInfo"></span> <span class="caret">▾</span></button></div>
+  <div id="filterPanel">
   <div class="filters">
     <input type="search" id="searchInput" placeholder="Search by name…">
   </div>
@@ -1076,6 +1097,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <button type="button" class="legend-chip" data-trust="landmark"><span class="dot landmark"></span>Classics</button>
     <button type="button" class="legend-chip" data-trust="earful"><span class="dot earful"></span>Earful Tower picks</button>
     <button type="button" class="legend-chip" data-trust="thrift"><span class="dot thrift"></span>Thrift &amp; vintage</button>
+  </div>
   </div>
 
   <main>
@@ -2299,6 +2321,28 @@ rebuildMarkers();
   } catch (err) {
     console.error('Marais walk failed to start', err);
   }
+})();
+
+// ---------- Phone layout: collapsible search & filters so the map gets the screen ----------
+(function phoneFilters() {
+  try {
+    const btn = document.getElementById('filterToggle');
+    const info = document.getElementById('filterToggleInfo');
+    if (!btn) return;
+    function label() {
+      const n = activeCategories.size + activeTrusts.size + (activeListFilter && activeListFilter !== 'all' ? 1 : 0) + (searchQuery ? 1 : 0);
+      info.textContent = n ? '· ' + n + ' active' : '';
+    }
+    btn.addEventListener('click', () => {
+      const open = document.body.classList.toggle('filters-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      setTimeout(() => map.invalidateSize(), 60);
+    });
+    ['click', 'input', 'change'].forEach(ev => document.addEventListener(ev, () => setTimeout(label, 80)));
+    label();
+    setTimeout(() => map.invalidateSize(), 200);
+    window.addEventListener('resize', () => map.invalidateSize());
+  } catch (err) { console.error('phone filters failed', err); }
 })();
 
 </script>
