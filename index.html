@@ -878,6 +878,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   main{flex:1;position:relative;overflow:hidden;}
   #map{position:absolute;inset:0;}
+  #walkToggle{position:absolute;top:10px;right:10px;z-index:900;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,.18);}
+  #walkToggle.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  #walkPanel{display:none;position:absolute;left:10px;right:10px;bottom:26px;z-index:900;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.2);max-height:38%;overflow-y:auto;padding:8px 12px 6px;max-width:460px;}
+  #walkPanel .walk-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:4px;}
+  #walkPanel .walk-head button{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--ink-soft);}
+  #walkPanel .walk-sub{font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;}
+  #walkList{list-style:none;margin:0;padding:0;}
+  #walkList li{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--line);cursor:pointer;font-size:13px;line-height:1.3;}
+  #walkList small{color:var(--ink-soft);font-size:11.5px;}
+  .walk-num,.walk-badge{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;border-radius:50%;background:#1f2330;color:#fff;font-weight:700;font-size:12px;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);box-sizing:border-box;}
+  .walk-label span{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:11px;font-style:italic;color:#5a4a1a;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 3px #fff;pointer-events:none;}
+  .walk-label.big span{font-size:13px;font-weight:700;font-style:normal;color:#8a6d12;}
+
 
   .view-panel{
     position:absolute;inset:0;
@@ -1067,6 +1080,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   <main>
     <div id="map"></div>
+    <div id="walkUI">
+      <button type="button" id="walkToggle" aria-pressed="false">🚶 Marais walk</button>
+      <div id="walkPanel">
+        <div class="walk-head"><span>Marais walk — stops in order</span><button type="button" id="walkClose" aria-label="Close">&times;</button></div>
+        <div class="walk-sub">Tap a stop to zoom there. Tap a numbered circle on the map for details.</div>
+        <ol id="walkList"></ol>
+      </div>
+    </div>
 
     <div class="view-panel" id="listView">
       <div class="section-title" id="listCount"></div>
@@ -1821,6 +1842,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     currentView = btn.dataset.view;
     document.getElementById('map').style.display = currentView === 'map' ? 'block' : 'none';
+    const walkUI = document.getElementById('walkUI'); if (walkUI) walkUI.style.display = currentView === 'map' ? 'block' : 'none';
     document.getElementById('listView').classList.toggle('visible', currentView === 'list');
     document.getElementById('areaView').classList.toggle('visible', currentView === 'area');
     document.getElementById('needsView').classList.toggle('visible', currentView === 'needs');
@@ -2178,6 +2200,106 @@ addPlaceForm.addEventListener('submit', (e) => {
 
 // ---------- Init ----------
 rebuildMarkers();
+
+// ---------- Marais walk (self-contained overlay: shaded neighborhood + numbered stops) ----------
+// Lives on its own layer group and its own buttons. It never touches the filters,
+// the pin markers or the saved data — switching it off removes only what it added.
+(function marais() {
+  try {
+    const STOPS = [
+      { n: 1, ids: ['p251'], title: 'Kiliwatch', tip: 'Big, curated vintage store. Mon–Sat 10:30–8 per Google; closed Sundays.' },
+      { n: 2, ids: ['p252'], title: 'Episode', tip: 'Huge two-level vintage shop, a few minutes from Kiliwatch. Mon–Sat 11–8; closed Sundays.' },
+      { n: 3, ids: ['p210'], title: 'Planète 70', tip: 'Your jacket shop, on the west edge of the Marais, a block from the Pompidou.' },
+      { n: 4, ids: ['p241', 'p240', 'p244', 'p245', 'p246', 'p239'], title: 'Rue de la Verrerie — 6 shops', tip: 'Three Free’P’Star + three Kilo Shop on one street. Walk it west to east; the order doesn’t matter.' },
+      { n: 5, ids: ['p255'], title: 'Hippy Market (Marais)', tip: 'Curated vintage, mid-priced.' },
+      { n: 6, ids: ['p33'], title: 'Mariage Frères — tea', tip: 'Connor’s tea house, right in the middle of the neighborhood.' },
+      { n: 7, ids: ['p254'], title: 'The King of Frip', tip: 'Two minutes from the tea house.' },
+      { n: 8, ids: ['p253'], title: 'Vintage Désir', tip: 'Small and crowded; €1 box.' },
+      { n: 9, ids: ['p243'], title: 'Free’P’Star (Rue de Rivoli)', tip: 'Last stop; the big street leads back toward City Hall.' },
+    ];
+    // Rough outline only — not an official boundary.
+    const MARAIS = [
+      [48.8575, 2.3490], [48.8605, 2.3498], [48.8645, 2.3510], [48.8662, 2.3560], [48.8660, 2.3640],
+      [48.8630, 2.3672], [48.8575, 2.3678], [48.8548, 2.3668], [48.8553, 2.3590], [48.8562, 2.3530],
+    ];
+    const LABELS = [
+      { t: 'Le Marais (rough outline)', ll: [48.8618, 2.3605], big: true },
+      { t: 'Centre Pompidou', ll: [48.8606, 2.3522] },
+      { t: 'Hôtel de Ville (City Hall)', ll: [48.8566, 2.3522] },
+      { t: 'Place des Vosges', ll: [48.8556, 2.3655] },
+    ];
+    const walkLayer = L.layerGroup();
+    const toggleBtn = document.getElementById('walkToggle');
+    const panel = document.getElementById('walkPanel');
+    const listEl = document.getElementById('walkList');
+    let on = false;
+    let built = false;
+    const pts = {}; // n -> array of [lat,lng]
+
+    function build() {
+      built = true;
+      walkLayer.addLayer(L.polygon(MARAIS, { color: '#B8962E', weight: 2, dashArray: '6 6', fillColor: '#E8C96B', fillOpacity: 0.2, interactive: false }));
+      LABELS.forEach(l => {
+        walkLayer.addLayer(L.marker(l.ll, {
+          interactive: false, keyboard: false, zIndexOffset: -500,
+          icon: L.divIcon({ className: 'walk-label' + (l.big ? ' big' : ''), html: '<span>' + l.t + '</span>', iconSize: [0, 0] }),
+        }));
+      });
+      const route = [];
+      STOPS.forEach(s => {
+        pts[s.n] = [];
+        s.ids.forEach(id => {
+          const p = allPlaces.find(x => x.id === id);
+          if (!p || p.lat == null) return;
+          const ll = [p.lat, p.lng];
+          pts[s.n].push(ll);
+          route.push(ll);
+          const m = L.marker(ll, {
+            keyboard: false, zIndexOffset: 2000,
+            icon: L.divIcon({ className: '', html: '<div class="walk-badge">' + s.n + '</div>', iconSize: [22, 22], iconAnchor: [-8, 46] }),
+          });
+          m.on('click', () => openDrawer(id));
+          walkLayer.addLayer(m);
+        });
+      });
+      walkLayer.addLayer(L.polyline(route, { color: '#444', weight: 3, opacity: 0.7, dashArray: '2 7', interactive: false }));
+      listEl.innerHTML = STOPS.map(s => '<li data-n="' + s.n + '"><span class="walk-num">' + s.n + '</span><span><b>' + s.title + '</b><br><small>' + s.tip + '</small></span></li>').join('');
+    }
+
+    function fitAll() {
+      const all = MARAIS.slice();
+      Object.values(pts).forEach(a => a.forEach(ll => all.push(ll)));
+      map.fitBounds(all, { padding: [30, 30], maxZoom: 16 });
+    }
+
+    function setOn(v) {
+      on = v;
+      if (on) {
+        if (!built) build();
+        walkLayer.addTo(map);
+        panel.style.display = 'block';
+        fitAll();
+      } else {
+        map.removeLayer(walkLayer);
+        panel.style.display = 'none';
+      }
+      toggleBtn.classList.toggle('active', on);
+      toggleBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+
+    toggleBtn.addEventListener('click', () => setOn(!on));
+    document.getElementById('walkClose').addEventListener('click', () => setOn(false));
+    listEl.addEventListener('click', (e) => {
+      const li = e.target.closest('li');
+      if (!li) return;
+      const a = pts[li.dataset.n] || [];
+      if (a.length === 1) map.setView(a[0], 17);
+      else if (a.length > 1) map.fitBounds(a, { padding: [60, 60], maxZoom: 18 });
+    });
+  } catch (err) {
+    console.error('Marais walk failed to start', err);
+  }
+})();
 
 </script>
 </body>
