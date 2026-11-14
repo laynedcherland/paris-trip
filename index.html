@@ -763,6 +763,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     --landmark-pin-deep:#5c5c00;
     --earful-pin:#8B5A2B;
     --earful-pin-deep:#5f3b1a;
+    --thrift-pin:#F0A9A4;
     --danger:#b5462f;
     --shadow:0 2px 10px rgba(31,36,48,0.08);
   }
@@ -868,6 +869,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .dot.key{background:var(--key-pin);}
   .dot.landmark{background:var(--landmark-pin);}
   .dot.earful{background:var(--earful-pin);}
+  .dot.thrift{background:var(--thrift-pin);}
   #storageWarning{display:none;background:#fff4e0;border-bottom:1px solid #e0b866;color:#6b4a10;font-size:12.5px;line-height:1.4;padding:9px 18px;}
 
   .filter-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 18px;background:var(--card);border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink-soft);}
@@ -1022,7 +1024,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <header>
     <div>
       <h1>Paris, curated</h1>
-      <div class="tag">Ochre pins = the general pile · blue pins = trusted · orchid pins = stays & key addresses · olive = classics · brown = Earful Tower picks</div>
+      <div class="tag">Ochre pins = the general pile · blue pins = trusted · orchid pins = stays & key addresses · olive = classics · brown = Earful Tower picks · pale pink = thrift &amp; vintage</div>
     </div>
     <div class="header-actions">
       <button class="btn" id="backupBtn" type="button" title="Download a copy of your notes, lists and added pins">Back up</button>
@@ -1060,6 +1062,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <button type="button" class="legend-chip" data-trust="key"><span class="dot key"></span>Stays & key addresses</button>
     <button type="button" class="legend-chip" data-trust="landmark"><span class="dot landmark"></span>Classics</button>
     <button type="button" class="legend-chip" data-trust="earful"><span class="dot earful"></span>Earful Tower picks</button>
+    <button type="button" class="legend-chip" data-trust="thrift"><span class="dot thrift"></span>Thrift &amp; vintage</button>
   </div>
 
   <main>
@@ -1156,7 +1159,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </script>
 <script>
 // Paris trip planner — seed data
-// trust: 'trusted' (Mollie + the first trusted Google list) / 'base' (everyone else) / 'key' (our own stays & key addresses — not a recommendation, just somewhere we need to find) / 'landmark' (the famous Paris classics — olive pins) / 'earful' (picks from The Earful Tower's 18th-arrondissement guide — warm brown pins)
+// trust: 'trusted' (Mollie + the first trusted Google list) / 'base' (everyone else) / 'key' (our own stays & key addresses — not a recommendation, just somewhere we need to find) / 'landmark' (the famous Paris classics — olive pins) / 'earful' (picks from The Earful Tower's 18th-arrondissement guide — warm brown pins) / 'thrift' (thrift & vintage shops — warm pale pink pins)
 // confirmed: false means no reliable lat/lng — shown in panel only, never on the map
 
 function gmaps(name, address) {
@@ -1172,6 +1175,7 @@ const CATEGORIES = [
   { id: 'music', label: 'Live music' },
   { id: 'museum', label: 'Museums & landmarks' },
   { id: 'shop', label: 'Shopping' },
+  { id: 'thrift', label: 'Thrift & vintage' },
   { id: 'park', label: 'Parks & outdoors' },
   { id: 'activity', label: 'Activities & day trips' },
   { id: 'key', label: 'Stays & key addresses' },
@@ -1414,6 +1418,39 @@ const PLACES = [
 {id:'p207',name:'Rue des Abbesses (stroll)',category:'activity',neighborhood:'18th arr., Montmartre',lat:48.8843091,lng:2.3387397,address:'Place des Abbesses, 75018 Paris',trust:'earful',confirmed:true,notes:["One of the guide author's favorite streets for strolling — restaurants, bars, cafés and boutiques, with a mix of tourists and locals. It's due to be pedestrianized soon.","Where to start: Place des Abbesses (metro Abbesses — the pin is here), then stroll northwest along Rue des Abbesses toward Rue Lepic. Café Le Nazir (no. 56) is on the way, and Rue Lepic then leads on to Le Moulin de la Galette.",'Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
 {id:'p208',name:'Villa Léandre',category:'activity',neighborhood:'18th arr., Montmartre',lat:48.8883776,lng:2.3350573,address:'25 Avenue Junot, 75018 Paris',trust:'earful',confirmed:true,notes:["Leafy, English-style cul-de-sac of cottage-like houses (built 1926; No. 10 has a \"Downing Street\" sign) — one of the best hidden corners of the 18th and a quiet escape from the crowds higher up the hill. It's residential, so keep your voice down.","Where to start: the only way in is the entrance at 25 Avenue Junot — walk to the lamppost at the far end and come back out. Nearest metro Lamarck–Caulaincourt (line 12); Le Très Particulier bar is next door (no. 23) if you want a drink after.",'Source: The Earful Tower, 18th arrondissement guide (Jun 2026).']},
 {id:'p209',name:'Bar Bleu',category:'bar',neighborhood:'18th arr., Montmartre',lat:48.8843534,lng:2.3411537,address:'15 Rue des Trois Frères, 75018 Paris',trust:'earful',confirmed:true,notes:['Small, friendly Montmartre bar with cocktails, wine and tapas — reviewers praise the cocktails, the Korean chicken and the owner. Google: 4.7★ (162). Closed Sundays and Mondays per Google; one reviewer notes a 10 € minimum on card payments and that it gets warm inside.','Source: The Earful Tower.']},
+// ---------- THRIFT & VINTAGE (warm pale pink) ----------
+{id:'p210',name:"Planète 70",category:'thrift',neighborhood:"3rd arr., near Pompidou",lat:48.8618056,lng:2.3515444,address:"147 Rue Saint-Martin, 75003 Paris",trust:'thrift',confirmed:true,notes:["The vintage shop where you found your favorite jacket. Genuinely vintage, strong on leather jackets; reviewers say prices are good. Hours per Google: Mon–Sat 11–8, Sun 12:30–8 — one reviewer found it still closed at 11:45, so go a little later. Google: 3.8★ (37).", "Source: your own find (you bought your favorite jacket here); hours and rating from Google (Nov 2026)."]},
+{id:'p211',name:"Guerrisol — 8 Bd de Sébastopol",category:'thrift',neighborhood:"4th arr.",lat:48.8590666,lng:2.3488887,address:"8 Bd de Sébastopol, 75004 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Three floors. Daily 10–8 per Google. 3.4★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p212',name:"Guerrisol — 96 bis Bd Barbès",category:'thrift',neighborhood:"18th arr.",lat:48.8913611,lng:2.3499132,address:"96 bis Bd Barbès, 75018 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Reviewers say most items are around €5. 3.4★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p213',name:"Guerrisol — 13 Av. de Clichy",category:'thrift',neighborhood:"17th arr.",lat:48.8847665,lng:2.3266276,address:"13 Av. de Clichy, 75017 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Closed Sundays per Google. 3.6★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p214',name:"Guerrisol — 19 Av. de Clichy",category:'thrift',neighborhood:"17th arr.",lat:48.8851393,lng:2.3263424,address:"19 Av. de Clichy, 75017 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Listed as “Guerrisol by Guerrida”; right next to the other Clichy branch. Only 13 reviews, 2.5★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p215',name:"Guerrisol — 21 Blvd Marguerite de Rochechouart",category:'thrift',neighborhood:"9th arr.",lat:48.8831787,lng:2.347238,address:"21 Blvd Marguerite de Rochechouart, 75009 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. 3.7★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p216',name:"Guerrisol — 27 Av. de l'Opéra",category:'thrift',neighborhood:"1st arr.",lat:48.8668281,lng:2.3336311,address:"27 Av. de l'Opéra, 75001 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Reviewers say prices have crept up to €10+. 3.2★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p217',name:"Guerrisol — 45 Bd de la Chapelle",category:'thrift',neighborhood:"10th arr.",lat:48.8835385,lng:2.3510783,address:"45 Bd de la Chapelle, 75010 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Reviewers say mostly about €3 an item. 3.6★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p218',name:"Guerrisol — 5 Av. d'Italie",category:'thrift',neighborhood:"13th arr.",lat:48.8301857,lng:2.3564147,address:"5 Av. d'Italie, 75013 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. Listed as “Guerrisol by Guerrida”. 3.6★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p219',name:"Guerrisol — 90 Av. du Général Leclerc",category:'thrift',neighborhood:"14th arr.",lat:48.8272971,lng:2.326251,address:"90 Av. du Général Leclerc, 75014 Paris",trust:'thrift',confirmed:true,notes:["Cheap secondhand chain. 3.5★. Prices vary by branch: a 2021 article had shirts ~€2 and winter jackets ~€5; recent reviews say €5–15 in places.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p237',name:"zxsbn6dd3vzbgsy Bonne Nouvelle",category:'thrift',neighborhood:"2nd arr., Bonne Nouvelle",lat:48.8695279,lng:2.3496313,address:"5 Rue Notre Dame de Bonne Nouvelle, 75002 Paris",trust:'thrift',confirmed:true,notes:["The riddle-named friperie. Its Instagram bio: “La friperie la moins chère de Paris, 0,95 € → 4,50 €”, open 7/7, 10–19h. Prices run on a daily schedule (one search summary lists a standard €2.85 day and a cheaper Wednesday) — check their Instagram for the day's price. Google also lists it as Les Sales Voleurs, 4.8★ (1,456); reviewers say the clothes are very cheap but heavily used.","Source: your thrift/vintage list; confirmed from the shop's Instagram search result and Google (Nov 2026)."]},
+{id:'p238',name:"Marché de Montreuil (Puces de Montreuil)",category:'thrift',neighborhood:"20th arr., Porte de Montreuil",lat:48.8549422,lng:2.4148313,address:"6 Av. du Professeur André Lemierre, 75020 Paris",trust:'thrift',confirmed:true,notes:["Flea market at Porte de Montreuil. Open Sat, Sun & Mon only (7–7:30 per Google). Reviewers: mostly cheap bulk clothes and tools, a few real antique stalls. 4.0★ (703).", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p239',name:"Free'P'Star — Rue de la Verrerie 61",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8579834,lng:2.3526702,address:"61 Rue de la Verrerie, 75004 Paris",trust:'thrift',confirmed:true,notes:["Chaotic, cheap retro/vintage friperie; €1 bins (no try-on from the bin). 10–7:30 (Sun from 12) per Google. 3.7★ (1,655).", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p240',name:"Free'P'Star — Rue de la Verrerie 85",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8586021,lng:2.3511423,address:"85 Rue de la Verrerie, 75004 Paris",trust:'thrift',confirmed:true,notes:["Chaotic, cheap retro/vintage friperie; €1 bins (no try-on from the bin). 10–8 (Sun from 12) per Google. Only 1 review.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p241',name:"Free'P'Star — Rue de la Verrerie 93",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8587564,lng:2.3506228,address:"93 Rue de la Verrerie, 75004 Paris",trust:'thrift',confirmed:true,notes:["Chaotic, cheap retro/vintage friperie; €1 bins (no try-on from the bin). Reviewers: go to the basement for the €1 bin; a leather long jacket for €20. 3.8★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p242',name:"Free'P'Star — Rue Saint-Denis",category:'thrift',neighborhood:"1st arr., Les Halles",lat:48.8610209,lng:2.3486343,address:"51 Rue St Denis, 75001 Paris",trust:'thrift',confirmed:true,notes:["Chaotic, cheap retro/vintage friperie; €1 bins (no try-on from the bin). Reviewers call it the biggest branch, with a €5 blazer section and trench coats around €20. 4.1★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p243',name:"Free'P'Star — Rue de Rivoli",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8559286,lng:2.3584281,address:"22 Rue de Rivoli, 75004 Paris",trust:'thrift',confirmed:true,notes:["Chaotic, cheap retro/vintage friperie; €1 bins (no try-on from the bin). 11–8:30 daily per Google. Mostly coats and sweaters, per a local reviewer. 3.9★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p244',name:"Kilo Shop — Rue de la Verrerie 69-71",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8582216,lng:2.3521803,address:"69-71 Rue de la Verrerie, 75004 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Two floors; reviewers found leather jackets for ~€18. 11–7:30, Sun from 2 per Google. 3.8★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p245',name:"Kilo Shop — Marais Bis",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8580997,lng:2.3522393,address:"67 Rue de la Verrerie, 75004 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Mon from 2, Tue–Sat 11–7:30, closed Sun per Google. 4.3★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p246',name:"Kilo Shop — Kawaii",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8580546,lng:2.3523803,address:"65 Rue de la Verrerie, 75004 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Y2K and colourful pieces; reviewers say a little pricier. 3.7★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p247',name:"Kilo Shop — Saint-Germain",category:'thrift',neighborhood:"6th arr.",lat:48.8528404,lng:2.3365401,address:"125 Bd Saint-Germain, 75006 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Several levels; not everything is by weight. 3.8★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p248',name:"Kilo Shop — Saint-Michel",category:'thrift',neighborhood:"5th arr.",lat:48.8505107,lng:2.3429982,address:"25 Bd Saint-Michel, 75005 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Three floors. 4.0★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p249',name:"Kilo Shop — Chaussée d'Antin",category:'thrift',neighborhood:"9th arr.",lat:48.8751408,lng:2.3325738,address:"62 Rue de la Chaussée d'Antin, 75009 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Reviewers love the leather and fur. Closed Sun per Google. 4.7★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p250',name:"Kilo Shop — Grands Boulevards",category:'thrift',neighborhood:"9th arr.",lat:48.8718236,lng:2.3421599,address:"10 Bd Montmartre, 75009 Paris",trust:'thrift',confirmed:true,notes:["Vintage priced by weight (colour tags, roughly €20–60/kg); fixed-price vintage pieces can be €50+. Colour-coded by weight, two levels. 4.0★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p251',name:"Kiliwatch",category:'thrift',neighborhood:"2nd arr., Montorgueil",lat:48.8648522,lng:2.3456871,address:"64 Rue Tiquetonne, 75002 Paris",trust:'thrift',confirmed:true,notes:["Big, well-organised vintage store: clothes, caps, glasses, bags, records. Mon–Sat 10:30–8 per Google. 4.1★ (944).", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p252',name:"Episode",category:'thrift',neighborhood:"2nd arr., Montorgueil",lat:48.8645785,lng:2.3492142,address:"12-16 Rue Tiquetonne, 75002 Paris",trust:'thrift',confirmed:true,notes:["Huge two-level vintage shop; reviewers say affordable (long fur coats €100–120, vintage Levi's ~€50). Mon–Sat 11–8 per Google. 4.2★ (906).", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p253',name:"Vintage Désir",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8573501,lng:2.3593062,address:"32 Rue des Rosiers, 75004 Paris",trust:'thrift',confirmed:true,notes:["Small and crowded; dresses and jackets around €10, €1 box (no try-on). Daily 11–8 per Google. 3.2★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p254',name:"The King of Frip",category:'thrift',neighborhood:"4th arr., Marais",lat:48.856552,lng:2.3568995,address:"33 Rue du Roi de Sicile, 75004 Paris",trust:'thrift',confirmed:true,notes:["More organised and pricier than Free'P'Star; around €20–25+ per piece per reviewers. 3.5★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p255',name:"Hippy Market — Marais",category:'thrift',neighborhood:"4th arr., Marais",lat:48.8595954,lng:2.3539417,address:"41 Rue du Temple, 75004 Paris",trust:'thrift',confirmed:true,notes:["Curated vintage; not cheap — reviewers say many pieces are €20–60. Mon & Sun from 2, other days 11–7:30 per Google. 3.8★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p256',name:"Hippy Market — Rambuteau",category:'thrift',neighborhood:"4th arr.",lat:48.861829,lng:2.35039,address:"71 Rue Rambuteau, 75004 Paris",trust:'thrift',confirmed:true,notes:["Curated vintage; not cheap — reviewers say many pieces are €20–60. Sun from 2 per Google. 4.4★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p257',name:"Hippy Market — Bastille",category:'thrift',neighborhood:"11th arr., Bastille",lat:48.8523554,lng:2.3726836,address:"47 Rue du Faubourg Saint-Antoine, 75011 Paris",trust:'thrift',confirmed:true,notes:["Curated vintage; not cheap — reviewers say many pieces are €20–60. Closed Sun per Google. 5.0★ (4 reviews).", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
+{id:'p258',name:"Hippy Market — SADA",category:'thrift',neighborhood:"6th arr.",lat:48.8535279,lng:2.3409177,address:"46 Rue Saint-André des Arts, 75006 Paris",trust:'thrift',confirmed:true,notes:["Curated vintage; not cheap — reviewers say many pieces are €20–60. Reviewers say most items €20–30. 4.1★.", "Source: your thrift/vintage list; hours and ratings from Google (Nov 2026)."]},
 ];
 
 // Neighborhood-level / general tips that don't map to one address.
@@ -1588,6 +1625,7 @@ function pinColor(place) {
   if (place.trust === 'key') return '#AD4D8C';
   if (place.trust === 'landmark') return '#808000';
   if (place.trust === 'earful') return '#8B5A2B';
+  if (place.trust === 'thrift') return '#F0A9A4';
   return place.trust === 'trusted' ? '#B8E3E9' : '#CC7722';
 }
 
@@ -1629,12 +1667,13 @@ const markerById = {};
 const COLOR_WORDS = {
   base: ['ochre', 'orange', 'general'],
   trusted: ['blue', 'trusted'],
-  key: ['orchid', 'purple', 'pink', 'stay', 'stays', 'key'],
+  key: ['orchid', 'purple', 'stay', 'stays', 'key'],
   landmark: ['olive', 'green', 'classic', 'classics', 'landmark', 'landmarks'],
   earful: ['brown', 'earful', 'montmartre-picks'],
+  thrift: ['pink', 'pale pink', 'peach', 'thrift', 'vintage', 'friperie'],
 };
 // Order used by "Sort: Pin color" (matches the legend left to right).
-const TRUST_ORDER = ['base', 'trusted', 'key', 'landmark', 'earful'];
+const TRUST_ORDER = ['base', 'trusted', 'key', 'landmark', 'earful', 'thrift'];
 
 function passesFilters(place) {
   if (activeCategories.size && !activeCategories.has(place.category)) return false;
@@ -1823,7 +1862,7 @@ function renderListView() {
       card.className = 'place-card';
       const status = getListStatus(place.id);
       const catLabel = (CATEGORIES.find(c => c.id === place.category) || {}).label || place.category;
-      const dotColor = place.trust === 'key' ? 'key' : place.trust === 'landmark' ? 'landmark' : place.trust === 'earful' ? 'earful' : (place.trust === 'trusted' ? 'trust' : 'base');
+      const dotColor = place.trust === 'key' ? 'key' : place.trust === 'landmark' ? 'landmark' : place.trust === 'earful' ? 'earful' : place.trust === 'thrift' ? 'thrift' : (place.trust === 'trusted' ? 'trust' : 'base');
       card.innerHTML = `
         <div class="row1">
           <div>
@@ -1915,7 +1954,7 @@ function openDrawer(id) {
   const place = findPlace(id);
   if (!place) return;
   const catLabel = (CATEGORIES.find(c => c.id === place.category) || {}).label || place.category;
-  const dotColor = place.trust === 'key' ? '#AD4D8C' : place.trust === 'landmark' ? '#808000' : place.trust === 'earful' ? '#8B5A2B' : (place.trust === 'trusted' ? '#B8E3E9' : '#CC7722');
+  const dotColor = place.trust === 'key' ? '#AD4D8C' : place.trust === 'landmark' ? '#808000' : place.trust === 'earful' ? '#8B5A2B' : place.trust === 'thrift' ? '#F0A9A4' : (place.trust === 'trusted' ? '#B8E3E9' : '#CC7722');
   const status = getListStatus(id);
   const savedNote = userNotes[id] || '';
 
@@ -2139,6 +2178,7 @@ addPlaceForm.addEventListener('submit', (e) => {
 
 // ---------- Init ----------
 rebuildMarkers();
+
 </script>
 </body>
 </html>
